@@ -5,7 +5,7 @@
 #
 # Calculates Normalized Signal (or Attenuation factor)
 # from given Tissue (T1/T2/PD) and Sequence (TE/TR) parameters
-# using the formula PD * exp(-TE/T1) * (1-exp(-TR/T1))
+# using the formula PD * exp(-TE/T1) * (1-exp(-(TR-TE)/T1))
 #
 # just a little programming exercise that uses Text input, Buttons and sliders
 #
@@ -146,18 +146,19 @@ class CalAMaRes(tk.Frame):
         T1=abs(T1); T2=abs(T2); PD=abs(PD);
         TE=abs(TE); TR=abs(TR);
         if TR<TE: # TR can't be less than TE
-            self.TR_scale.set(TE);
-            self.TE_scale.set(TR);
-            return;
+            TR, TE = TE, TR
+            self.TR_scale.set(TR);
+            self.TE_scale.set(TE);
+            return;    
         # avoid division by zero
         if T1==0 and T2!=0:
             att = PD * exp(-TE/T2);
         if T1!=0 and T2==0:
-            att = PD * (1-exp(-TR/T1));
+            att = PD * (1-exp(-(TR-TE)/T1));
         if T1==0 and T2==0:
             att = PD;
         if T1!=0 and T2!=0: # this is the normal case
-             att = PD * exp(-TE/T2) * (1-exp(-TR/T1));       
+             att = PD * exp(-TE/T2) * (1-exp(-(TR-TE)/T1));       
         s = "ATT = %.4f" % att;
         # show result 
         self.ATT.set(s);
