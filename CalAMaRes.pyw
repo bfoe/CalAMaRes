@@ -55,189 +55,217 @@ TE_def = 30;
 TR_def = 2000
 
 
+def Update():
+    T1 = float(T1_value);
+    T2 = float(T2_value);
+    PD = float(PD_value);
+    # alternative code    
+    #try:  T1 = float(T1_tkEntry.get());
+    #except: T1 = 0 
+    #try:  T2 = float(T2_tkEntry.get());
+    #except: T2 = 0 
+    #try:  PD = float(PD_tkEntry.get());
+    #except: PD = 0     
+    TE = float(TE_tkScale.get()); #TE = float(PD_tkEntry.get()); 
+    TR = float(TR_tkScale.get()); #TR = float(PD_tkEntry.get()); 
+    # just for safety (negative values should never actually occur)
+    T1=abs(T1); T2=abs(T2); PD=abs(PD);
+    TE=abs(TE); TR=abs(TR);
+    # avoid division by zero
+    if T1==0 and T2!=0:
+        att = PD * exp(-TE/T2);
+    if T1!=0 and T2==0:
+        att = PD * (1-exp(-(TR-TE)/T1));
+    if T1==0 and T2==0:
+        att = PD;
+    if T1!=0 and T2!=0: # this is the normal case
+         att = PD * exp(-TE/T2) * (1-exp(-(TR-TE)/T1));       
+    s = "ATT = %.4f" % att;
+    # show result 
+    ATT_tkVar.set(s);
+    # uncomment line below for debug
+    # print "T1=%.0f T2=%.0f PD=%.4f TE=%.0f TR=%.0f ATT=%.4f" % (T1, T2, PD, TE, TR, att);
 
-class CalAMaRes(tk.Frame):
-    def __init__(self, parent=tk.Tk()):
-        tk.Frame.__init__(self, parent);
-        self.parent = parent;
-        self.parent.title('CalAMarRes');
-        # variable Definition & Initialization
-        self.T1_value=T1_WM_def; self.T1_text = tk.IntVar(); self.T1_text.set(self.T1_value);
-        self.T2_value=T2_WM_def; self.T2_text = tk.IntVar(); self.T2_text.set(self.T2_value); 
-        self.PD_value=PD_WM_def; self.PD_text = tk.IntVar(); self.PD_text.set(self.PD_value);
-        self.TE = tk.IntVar(); self.TE.set(TE_def);
-        self.TR = tk.IntVar(); self.TR.set(TR_def);
-        self.ATT = tk.IntVar();
-        # tk.Scale sider for TE 
-        self.TE_scale = tk.Scale(self.master,
-            command=self.Update,
-            variable=self.TE,
-            from_=0, to=300, resolution=1,
-            length=500, tickinterval=20,
-            showvalue='yes', 
-            orient='horizontal');
-        self.TE_scale.set(self.TE.get());
-        self.TE_Label = tk.Label(self.master, text='TE');
-        # tk.Scale sider for TR
-        self.TR_scale = tk.Scale(self.master,
-            command=self.Update,
-            variable=self.TR,
-            from_=0, to=6000, resolution=1, 
-            length=500, tickinterval=500, 
-            showvalue='yes', 
-            orient='horizontal');
-        self.TR_scale.set(self.TR.get());
-        self.TR_Label = tk.Label(self.master, text='TR');
-        # tk.Label Names for Entry
-        self.T1_Label = tk.Label(self.master, text='T1'); 
-        self.T2_Label = tk.Label(self.master, text='T2'); 
-        self.PD_Label = tk.Label(self.master, text='PD');
-        # tk.Entry for T1, T2, PD
-        self.T1_Entry = tk.Entry(self.master, textvariable=self.T1_text, validate="key", 
-                        validatecommand=(self.register(self.validateT1), '%d', '%i', '%P', '%s'));      
-        self.T2_Entry = tk.Entry(self.master, textvariable=self.T2_text, validate="key", 
-                        validatecommand=(self.register(self.validateT2), '%d', '%i', '%P', '%s'));
-        self.PD_Entry = tk.Entry(self.master, textvariable=self.PD_text, validate="key", 
-                        validatecommand=(self.register(self.validatePD), '%d', '%i', '%P', '%s'));
-        # bind arrow keys on Entry(s)
-        def FocusT1(event): self.T1_Entry.focus();
-        def FocusT2(event): self.T2_Entry.focus();
-        def FocusPD(event): self.PD_Entry.focus();
-        self.T1_Entry.bind('<Down>', FocusT2);
-        self.T2_Entry.bind('<Down>', FocusPD);
-        self.T2_Entry.bind('<Up>',   FocusT1);
-        self.PD_Entry.bind('<Up>',   FocusT2);
-        # tk.Button for reset buttons
-        self.WM_button  = tk.Button(self.master, text="WM",  font=('', 26), command=self.WM_reset);
-        self.GM_button  = tk.Button(self.master, text="GM",  font=('', 26), command=self.GM_reset);
-        self.CSF_button = tk.Button(self.master, text="CSF", font=('', 26), command=self.CSF_reset);
-        # tk.Label to show result
-        self.ATT_Label = tk.Label(self.master, font=('', 26), textvariable=self.ATT);
-        # Layout
-        # ---------------------
-        # | L | E | B | B | B |
-        # | L | E | ^ | ^ | ^ |
-        # | L | E | ^ | ^ | ^ |
-        # | L | S | < | < | < |
-        # | L | S | < | < | < |
-        # |   |   |   |   |   |
-        # |   | L | < | < | < |
-        # ---------------------
-        self.T1_Label.grid(row=0, column=0, sticky=tk.W); self.T1_Entry.grid (row=0, column=1, sticky=tk.W+tk.W);       
-        self.T2_Label.grid(row=1, column=0, sticky=tk.W); self.T2_Entry.grid (row=1, column=1, sticky=tk.W+tk.W); 
-        self.PD_Label.grid(row=2, column=0, sticky=tk.W); self.PD_Entry.grid (row=2, column=1, sticky=tk.W+tk.W);     
-        self.WM_button.grid (row=0, rowspan=3, column=2, sticky=tk.W);
-        self.GM_button.grid (row=0, rowspan=3, column=3, sticky=tk.W);
-        self.CSF_button.grid(row=0, rowspan=3, column=4, sticky=tk.W);    
-        self.TE_Label.grid(row=3, column=0, sticky=tk.W); self.TE_scale.grid (row=3, column=1, columnspan=4, sticky=tk.W); 
-        self.TR_Label.grid(row=4, column=0, sticky=tk.W); self.TR_scale.grid (row=4, column=1, columnspan=4, sticky=tk.W); 
-        self.empty = tk.Label(self.master, text=''); self.empty.grid    (row=5, column=0, sticky=tk.W);    
-        self.ATT_Label.grid(row=6, column=1, columnspan=4, sticky=tk.W);
-
-
-
-    def Update(self, value):
-        T1 = float(self.T1_value);
-        T2 = float(self.T2_value);
-        PD = float(self.PD_value);
-        TE = float(self.TE_scale.get());
-        TR = float(self.TR_scale.get());
-        # just for safety (negative values should never actually occur)
-        T1=abs(T1); T2=abs(T2); PD=abs(PD);
-        TE=abs(TE); TR=abs(TR);
-        if TR<TE: # TR can't be less than TE
-            TR, TE = TE, TR
-            self.TR_scale.set(TR);
-            self.TE_scale.set(TE);
-            return;    
-        # avoid division by zero
-        if T1==0 and T2!=0:
-            att = PD * exp(-TE/T2);
-        if T1!=0 and T2==0:
-            att = PD * (1-exp(-(TR-TE)/T1));
-        if T1==0 and T2==0:
-            att = PD;
-        if T1!=0 and T2!=0: # this is the normal case
-             att = PD * exp(-TE/T2) * (1-exp(-(TR-TE)/T1));       
-        s = "ATT = %.4f" % att;
-        # show result 
-        self.ATT.set(s);
-        # uncomment line below for debug
-        # print "T1=%.0f T2=%.0f PD=%.4f TE=%.0f TR=%.0f ATT=%.4f" % (T1, T2, PD, TE, TR, att);
-
+def validateTE(TE):
+    TE = float(TE); #TE = float(TE_tkScale.get());
+    TR = float(TR_tkScale.get());
+    if TR<TE: # TR can't be less than TE
+        TR, TE = TE, TR
+        TR_tkScale.set(TR);
+        TE_tkScale.set(TE);
+    Update();
         
-    def validateT1(self, action, index, new_text, prior_text):
-        if new_text=='': # the field is being cleared
-            self.T1_value = 0;
-            self.Update(self); return True;
-        try:
-            self.T1_value = int(new_text);
-        except ValueError:
-            return False;
-        if self.T1_value<0: return False;
-        if self.T1_value<self.T2_value: # in case of T1<T2 modify T2
-            self.T2_value = self.T1_value;
-            self.T2_text.set(self.T1_value);           
-        self.Update(self); return True;
+def validateTR(TR):
+    TE = float(TE_tkScale.get());
+    TR = float(TR); #TR = float(TR_tkScale.get());
+    if TR<TE: # TR can't be less than TE
+        TR, TE = TE, TR
+        TR_tkScale.set(TR);
+        TE_tkScale.set(TE);
+    Update(); 
+    
+def validateT1(action, index, new_text, prior_text):
+    global T1_value, T2_value
+    if new_text=='': # the field is being cleared
+        T1_value = 0;
+        Update(); return True;
+    try:
+        T1_value = int(new_text);
+    except ValueError:
+        return False;
+    if T1_value<0: return False;
+    if T1_value<T2_value: # in case of T1<T2 modify T2
+        T2_value = T1_value;
+        T2_tkVar.set(T1_value);           
+    Update(); return True;
+    
+  
+def validateT2(action, index, new_text, prior_text):
+    global T1_value, T2_value
+    if new_text=='': # the field is being cleared
+        T2_value = 0;
+        Update(); return True;
+    try:
+        T2_value = int(new_text);
+    except ValueError:
+        return False;
+    if T2_value<0: return False;
+    if T2_value>T1_value: # in case of T2>T1 modify T1
+        T1_value = T2_value;
+        T1_tkVar.set(T2_value);           
+    Update(); return True;                  
+    
+def validatePD(action, index, new_text, prior_text):
+    global PD_value
+    if action == "-1": # initial .set command
+        PD_value = float(new_text);
+        Update(); return True;  # return without checks
+    if new_text=='': # the field is being cleared
+        PD_value = 0;      
+        Update(); return True;
+    try:
+        PD_value = float(new_text);
+        if PD_value>1: # upper bound
+            PD_value = 1;
+            # Start update visualization
+            # http://stupidpythonideas.blogspot.com.br/2013/12/tkinter-validation.html
+            PD_tkEntry.delete(0, tk.END);
+            PD_tkEntry.insert(0,PD_value);
+            root.after_idle(lambda: PD_tkEntry.config(validate='key'));
+            # End update visualization
+        if PD_value<0: # lower bound
+            PD_value = 0;
+            # Start update visualization
+            # http://stupidpythonideas.blogspot.com.br/2013/12/tkinter-validation.html
+            PD_tkEntry.delete(0, tk.END);
+            PD_tkEntry.insert(0,PD_value);
+            root.after_idle(lambda: PD_tkEntry.config(validate='key'));
+            # End update visualization        
+        Update(); return True;
+    except ValueError:
+        return False;
         
-      
-    def validateT2(self, action, index, new_text, prior_text):
-        if new_text=='': # the field is being cleared
-            self.T2_value = 0;
-            self.Update(self); return True;
-        try:
-            self.T2_value = int(new_text);
-        except ValueError:
-            return False;
-        if self.T2_value<0: return False;
-        if self.T2_value>self.T1_value: # in case of T2>T1 modify T1
-            self.T1_value = self.T2_value;
-            self.T1_text.set(self.T2_value);           
-        self.Update(self); return True;                  
-        
-    def validatePD(self, action, index, new_text, prior_text):
-        if action == "-1": # initial .set command
-            self.PD_value = float(new_text);
-            self.Update(self); return True;  # return without checks
-        if new_text=='': # the field is being cleared
-            self.PD_value = 0;      
-            self.Update(self); return True;
-        try:
-            self.PD_value = float(new_text);
-            if self.PD_value>1: # upper bound
-                self.PD_value = 1;
-                # Start update visualization
-                # from http://stupidpythonideas.blogspot.com.br/2013/12/tkinter-validation.html
-                self.PD_Entry.delete(0, tk.END);
-                self.PD_Entry.insert(0,self.PD_value);
-                self.after_idle(lambda: self.PD_Entry.config(validate='key'));
-                # End update visualization
-            if self.PD_value<0: # lower bound
-                self.PD_value = 0;
-                # Start update visualization
-                # from http://stupidpythonideas.blogspot.com.br/2013/12/tkinter-validation.html
-                self.PD_Entry.delete(0, tk.END);
-                self.PD_Entry.insert(0,self.PD_value);
-                self.after_idle(lambda: self.PD_Entry.config(validate='key'));
-                # End update visualization        
-            self.Update(self); return True;
-        except ValueError:
-            return False;
-            
-    def WM_reset(self):
-        self.T1_value = T1_WM_def; self.T1_text.set(self.T1_value);
-        self.T2_value = T2_WM_def; self.T2_text.set(self.T2_value);
-        self.PD_value = PD_WM_def; self.PD_text.set(self.PD_value);
-        
-    def GM_reset(self):
-        self.T1_value = T1_GM_def; self.T1_text.set(self.T1_value);
-        self.T2_value = T2_GM_def; self.T2_text.set(self.T2_value);
-        self.PD_value = PD_GM_def; self.PD_text.set(self.PD_value);
-        
-    def CSF_reset(self):
-        self.T1_value = T1_CSF_def; self.T1_text.set(self.T1_value);
-        self.T2_value = T2_CFS_def; self.T2_text.set(self.T2_value);
-        self.PD_value = PD_CSF_def; self.PD_text.set(self.PD_value);
+def WM_reset():
+    global T1_value, T2_value, PD_value
+    T1_value = T1_WM_def; T1_tkVar.set(T1_value);
+    T2_value = T2_WM_def; T2_tkVar.set(T2_value);
+    PD_value = PD_WM_def; PD_tkVar.set(PD_value);
+    Update();
+    
+def GM_reset():
+    global T1_value, T2_value, PD_value
+    T1_value = T1_GM_def; T1_tkVar.set(T1_value);
+    T2_value = T2_GM_def; T2_tkVar.set(T2_value);
+    PD_value = PD_GM_def; PD_tkVar.set(PD_value);
+    Update();
+    
+def CSF_reset():
+    global T1_value, T2_value, PD_value
+    T1_value = T1_CSF_def; T1_tkVar.set(T1_value);
+    T2_value = T2_CFS_def; T2_tkVar.set(T2_value);
+    PD_value = PD_CSF_def; PD_tkVar.set(PD_value);
+    Update();
 
         
-CalAMaRes().mainloop();
+root = tk.Tk()
+root.title('CalAMarRes');\
+# variable Definition & Initialization
+T1_value=T1_WM_def; T1_tkVar = tk.IntVar(); T1_tkVar.set(T1_WM_def);
+T2_value=T2_WM_def; T2_tkVar = tk.IntVar(); T2_tkVar.set(T2_WM_def); 
+PD_value=PD_WM_def; PD_tkVar = tk.IntVar(); PD_tkVar.set(PD_WM_def);
+TE_tkVar  = tk.IntVar(); TE_tkVar.set(TE_def);
+TR_tkVar  = tk.IntVar(); TR_tkVar.set(TR_def);
+ATT_tkVar = tk.IntVar();
+# tk.Scale sider for TE 
+TE_tkScale = tk.Scale(root, command=validateTE, variable=TE_tkVar, 
+    from_=0, to=300, resolution=1, 
+    length=500, tickinterval=20, 
+    showvalue='yes', orient='horizontal');
+TE_tkScale.set(TE_tkVar.get());
+TE_tkLabel = tk.Label(root, text='TE ');
+# tk.Scale sider for TR
+TR_tkScale = tk.Scale(root, command=validateTR, variable=TR_tkVar, 
+    from_=0, to=6000, resolution=1, 
+    length=500, tickinterval=500, 
+    showvalue='yes', orient='horizontal');
+TR_tkScale.set(TR_tkVar.get());
+TR_tkLabel = tk.Label(root, text='TR ');
+# tk.Label Names for Entry
+T1_tkLabel = tk.Label(root, text='T1 '); 
+T2_tkLabel = tk.Label(root, text='T2 '); 
+PD_tkLabel = tk.Label(root, text='PD ');
+# tk.Entry for T1, T2, PD
+T1_tkEntry = tk.Entry(root, textvariable=T1_tkVar, validate="key", 
+    validatecommand=(root.register(validateT1), '%d', '%i', '%P', '%s'));
+T2_tkEntry = tk.Entry(root, textvariable=T2_tkVar, validate="key", 
+    validatecommand=(root.register(validateT2), '%d', '%i', '%P', '%s'));
+PD_tkEntry = tk.Entry(root, textvariable=PD_tkVar, validate="key", 
+    validatecommand=(root.register(validatePD), '%d', '%i', '%P', '%s'));
+# bind arrow keys on Entry(s)
+def FocusT1(event): T1_tkEntry.focus();
+def FocusT2(event): T2_tkEntry.focus();
+def FocusPD(event): PD_tkEntry.focus();
+T1_tkEntry.bind('<Down>', FocusT2);
+T2_tkEntry.bind('<Down>', FocusPD);
+T2_tkEntry.bind('<Up>',   FocusT1);
+PD_tkEntry.bind('<Up>',   FocusT2);
+# tk.Button for reset buttons
+WM_tkButton  = tk.Button(root, text="WM",  font=('', 26), command=WM_reset);
+GM_tkButton  = tk.Button(root, text="GM",  font=('', 26), command=GM_reset);
+CSF_tkButton = tk.Button(root, text="CSF", font=('', 26), command=CSF_reset);
+# tk.Label to show result
+ATT_tkLabel = tk.Label(root, font=('', 26), textvariable=ATT_tkVar);
+# Layout
+# -------------------------------------------------------------
+# | T1_Label | T1_Entry  | WM_Button | GM_Button | CSF_Button |
+# | T2_Label | T2_Entry  |    ^      |    ^      |     ^      |
+# | PD_Label | PD_Entry  |    ^      |    ^      |     ^      |
+# | TE_Label | TE_Scale  |    <      |    <      |     <      |
+# | TR_Label | TR_Scale  |    <      |    <      |     <      |
+# |  empty   |    <      |    <      |    <      |     <      |
+# |          | ATT_Label |    <      |    <      |     <      |
+# -------------------------------------------------------------
+#
+# T1,T2,PD
+T1_tkLabel.grid(row=0, column=0, sticky=tk.W);      #T1_Label
+T1_tkEntry.grid (row=0, column=1, sticky=tk.W+tk.W);#T2_Entry     
+T2_tkLabel.grid(row=1, column=0, sticky=tk.W);      #T2_Label
+T2_tkEntry.grid (row=1, column=1, sticky=tk.W+tk.W);#T2_Entry
+PD_tkLabel.grid(row=2, column=0, sticky=tk.W);      #PD_Label
+PD_tkEntry.grid (row=2, column=1, sticky=tk.W+tk.W);#PD_Entry     
+# Reset
+WM_tkButton.grid (row=0, rowspan=3, column=2, sticky=tk.W);#WM_Button
+GM_tkButton.grid (row=0, rowspan=3, column=3, sticky=tk.W);#GM_Button
+CSF_tkButton.grid(row=0, rowspan=3, column=4, sticky=tk.W);#CSF_Button    
+# TE, TR
+TE_tkLabel.grid(row=3, column=0, sticky=tk.W);               #TE_Label
+TE_tkScale.grid (row=3, column=1, columnspan=4, sticky=tk.W);#TE_Entry
+TR_tkLabel.grid(row=4, column=0, sticky=tk.W);               #TR_Label 
+TR_tkScale.grid (row=4, column=1, columnspan=4, sticky=tk.W);#TR_Entry
+# Result
+empty = tk.Label(root, text=''); # to create an empty line for spacing
+empty.grid    (row=5, column=0, columnspan=5, sticky=tk.W);  #empty  
+ATT_tkLabel.grid(row=6, column=1, columnspan=4, sticky=tk.W);#ATT_Label
+
+
+root.mainloop()
