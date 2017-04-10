@@ -12,6 +12,7 @@
 # License GPL
 # 
 
+import os;
 import sys;
 from math import exp;
 try: import Tkinter as tk;     # Python2
@@ -205,7 +206,9 @@ def reset():
 # ========================= MAIN PROGRAM STARTS HERE =========================
 
 root = tk.Tk()
-root.title('CalAMarRes');\
+root.resizable(width=False, height=False)
+Program_name = os.path.basename(sys.argv[0]); 
+root.title(Program_name[:Program_name.find('.')]);
 # variable Definition & Initialization
 T1_tkVar  = tk.StringVar(); T1_tkVar.set(T1_WM_def);
 T2_tkVar  = tk.StringVar(); T2_tkVar.set(T2_WM_def); 
@@ -283,9 +286,9 @@ GM_tkButton.grid (row=0, rowspan=3, column=3, sticky=tk.W);#GM_Button
 CSF_tkButton.grid(row=0, rowspan=3, column=4, sticky=tk.W);#CSF_Button    
 # TE, TR
 TE_tkLabel.grid(row=3, column=0, sticky=tk.W);               #TE_Label
-TE_tkScale.grid (row=3, column=1, columnspan=4, sticky=tk.W);#TE_Entry
+TE_tkScale.grid (row=3, column=1, columnspan=4, sticky=tk.W);#TE_Scale
 TR_tkLabel.grid(row=4, column=0, sticky=tk.W);               #TR_Label 
-TR_tkScale.grid (row=4, column=1, columnspan=4, sticky=tk.W);#TR_Entry
+TR_tkScale.grid (row=4, column=1, columnspan=4, sticky=tk.W);#TR_Scale
 # Result
 empty = tk.Label(root, text=''); # to create an empty line for spacing
 empty.grid    (row=5, column=0, columnspan=5, sticky=tk.W);  #empty  

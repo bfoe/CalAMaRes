@@ -1,5 +1,5 @@
 # CalAMaRes
-## Calculadora Autom√°tica para Resson√¢ncia Magn√©tica
+## Calculadora Autom·tica para Resson‚ncia MagnÈtica
 ## (Portuguese for "Automatic MR calculator" ;)
 ##
 calculates normalized MR signal (attenuation factor) from given 
@@ -10,4 +10,5 @@ using the formula PD * exp(-TE/T1) * (1-exp(-(TR-TE)/T1))
 ##
 just a little programming exercise that uses Text Input, Buttons and Sliders
 ##
-License: GPL
+License: GPLv3
+ 
