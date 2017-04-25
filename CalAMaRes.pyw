@@ -18,23 +18,13 @@ from math import exp;
 try: import Tkinter as tk;     # Python2
 except: 
     try: import tkinter as tk; # Python3
-    except: print "Error: tkinter not found"; sys.exit(1)           
+    except: print ("Error: tkinter not found\n"); sys.exit(1)           
 
-# predefined Tissue Parameters 
+# predefined Tissue Parameters, taken from:
 # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2822798/
-#
-# CSF
-T1_CSF_def = 4000; 
-T2_CSF_def = 2470; 
-PD_CSF_def = 0.97;
-#
-T1_GM_def  = 1034; 
-T2_GM_def  = 93;   
-PD_GM_def  = 0.78;
-#
-T1_WM_def  = 660; 
-T2_WM_def  = 73;  
-PD_WM_def  = 0.65;
+T1_GM_def  = 1034;  T1_WM_def  = 660;   T1_CSF_def = 4000;
+T2_GM_def  = 93;    T2_WM_def  = 73;    T2_CSF_def = 2470;
+PD_GM_def  = 0.78;  PD_WM_def  = 0.65;  PD_CSF_def = 0.97;
 
 # to reproduce the LCModel attenuation factor of 0.7 
 # valid for WM, PRESS TE=30-35ms
@@ -51,10 +41,10 @@ PD_WM_def  = 0.65;
 #
 TE_def = 30;
 TR_def = 2000
-
+ltgray='#dbdbdb';
 
 def Update (t1, t2, pd, te, tr):
-    #print "Input:  t1=%s t2=%s pd=%s te=%s tr=%s" % (t1, t2, pd, te, tr); # debug
+    #print ("Input:  t1=%s t2=%s pd=%s te=%s tr=%s" % (t1, t2, pd, te, tr)); # debug
     T1 = float_(t1);
     T2 = float_(t2);
     PD = float_(pd);
@@ -79,7 +69,7 @@ def Update (t1, t2, pd, te, tr):
     s = "ATT = %.4f" % att;
     # show result 
     ATT_tkVar.set(s);
-    #print "Output: T1=%g T2=%g PD=%g TE=%g TR=%g ATT=%g" % (T1, T2, PD, TE, TR, att); # debug
+    #print ("Output: T1=%g T2=%g PD=%g TE=%g TR=%g ATT=%g" % (T1, T2, PD, TE, TR, att)); # debug
 
 def FocusT1(event): T1_tkEntry.focus(); T1_tkEntry.icursor(110); T1_tkEntry.select_clear()
 def FocusT2(event): T2_tkEntry.focus(); T2_tkEntry.icursor(110); T2_tkEntry.select_clear()
@@ -220,13 +210,13 @@ ATT_tkVar = tk.IntVar();
 TE_tkScale = tk.Scale(root, command=validateTE, variable=TE_tkVar, 
     from_=0, to=300, resolution=1, 
     length=500, tickinterval=20, 
-    showvalue='yes', orient='horizontal');
+    showvalue='yes', troughcolor=ltgray, orient='horizontal');
 TE_tkLabel = tk.Label(root, text='TE ');
 # tk.Scale sider for TR
 TR_tkScale = tk.Scale(root, command=validateTR, variable=TR_tkVar, 
     from_=0, to=6000, resolution=1, 
     length=500, tickinterval=500, 
-    showvalue='yes', orient='horizontal');
+    showvalue='yes', troughcolor=ltgray, orient='horizontal');
 TR_tkLabel = tk.Label(root, text='TR ');
 # tk.Label Names for Entry
 T1_tkLabel = tk.Label(root, text='T1 '); 
